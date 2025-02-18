@@ -1,21 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import PatientProfile from "../PatientProfile";
-import { getPatient } from "../../apis";
+import { getPatient, Patient } from "../../apis"; 
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import "@testing-library/jest-dom/vitest";
 
-vi.mock("../../apis", () => ({
-  getPatient: vi.fn().mockResolvedValue(null), 
-}));
 
+vi.mock("../../apis", () => ({
+  getPatient: vi.fn(), 
+}));
 
 describe("PatientProfile Component", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.clearAllMocks(); 
   });
 
-  const mockPatient = {
+
+  const mockPatient: Patient = {
     patientId: "123",
     prefix: "Mr.",
     firstName: "John",
@@ -23,7 +24,7 @@ describe("PatientProfile Component", () => {
     birthDate: "1990-01-01",
     gender: "Male",
     phone: "123-456-7890",
-    emergencyContactName: "Jane Doe",
+    emergencyContactName: "Jane Doe", 
     emergencyContactPhone: "987-654-3210",
     identifierCode: "ID123",
     identifierType: "Passport",
@@ -52,7 +53,8 @@ describe("PatientProfile Component", () => {
   });
 
   it("fetches and displays patient details", async () => {
-    getPatient.mockResolvedValue(mockPatient);
+    // Use Vitest's mockResolvedValueOnce to mock a successful response
+    vi.mocked(getPatient).mockResolvedValueOnce(mockPatient);
     renderComponent();
 
     await waitFor(() => {
@@ -63,7 +65,8 @@ describe("PatientProfile Component", () => {
   });
 
   it("handles API error gracefully", async () => {
-    getPatient.mockRejectedValue(new Error("API Error"));
+    // Use Vitest's mockRejectedValueOnce to mock an error response
+    vi.mocked(getPatient).mockRejectedValueOnce(new Error("API Error"));
     renderComponent();
 
     await waitFor(() => {
@@ -75,20 +78,3 @@ describe("PatientProfile Component", () => {
     });
   });
 });
-
-
-//   it("allows switching between sections", async () => {
-//     getPatient.mockResolvedValue(mockPatient);
-//     renderComponent();
-
-//     await waitFor(() => {
-//       expect(screen.getByText("Patient Details")).toBeInTheDocument();
-//     });
-
-//     fireEvent.click(screen.getByText("Identifiers"));
-//     expect(screen.getByText("Identifier Code")).toBeInTheDocument();
-
-//     fireEvent.click(screen.getByText("Emergency Contact"));
-//     expect(screen.getByText("Jane Doe")).toBeInTheDocument();
-//   });
-// });

@@ -3,15 +3,44 @@ import FHIRPath from "fhirpath";
 
 const backendUrl = "http://localhost:3001/fhir/";
 
+interface FHIRResource {
+  resource: {
+    id: string;
+    name: {
+      prefix: string;
+      given: string[];
+      family: string;
+    };
+    birthDate: string;
+    gender: string;
+    contact: Array<{
+      name: {
+        given: string[];
+        family: string;
+      };
+      telecom: { value: string }[];
+    }>;
+    identifier: Array<{
+      type: {
+        coding: { code: string; display: string }[];
+      };
+      value: string;
+    }>;
+    telecom: Array<{ value: string }>;
+    meta: {
+      lastUpdated: string;
+      profile: string[];
+      versionId: string;
+    };
+  };
+}
 
-
- interface Patient {
+ export interface Patient {
   patientId: string;
   firstName: string;
   lastName: string;
   prefix: string;
   birthDate: string;
-  emergencyContact: any;
   gender: string;
   emergencyContactName: string;
   emergencyContactPhone: string;
@@ -32,7 +61,7 @@ export async function getPatients(): Promise<Patient[] | void> {
       throw new Error("No patient data found in response");
     }
 
-    const patients: Patient[] = data.entry.map((patient: Patient) =>
+    const patients: Patient[] = data.entry.map((patient: FHIRResource) =>
       processPatientData(patient)
     );
     console.log(patients);
@@ -42,7 +71,7 @@ export async function getPatients(): Promise<Patient[] | void> {
   }
 }
 
-const processPatientData = (patient: Patient): Patient => {
+const processPatientData = (patient: FHIRResource): Patient => {
   const patientId =
     (FHIRPath.evaluate(patient, "resource.id") as string[])[0] ||
     "No Id available";
@@ -59,33 +88,14 @@ const processPatientData = (patient: Patient): Patient => {
     (FHIRPath.evaluate(patient, "resource.birthDate") as string[])[0] ||
     "No birthdate provided";
 
-  const emergencyContact =
-    (
-      FHIRPath.evaluate(
-        patient,
-        "resource.contact.relationship.text"
-      ) as string[]
-    )[0] === "Notfallkontakt"
-      ? FHIRPath.evaluate(patient, "resource.contact")
-      : "";
+const emergencyContactName =
+  (
+    FHIRPath.evaluate(patient, "resource.contact.name.given") as string[]
+  )[0] || "None specified";
 
-  const emergencyContactName = emergencyContact
-    ? `${
-        (
-          FHIRPath.evaluate(patient, "resource.contact.name.given") as string[]
-        )[0] || ""
-      } ${
-        (
-          FHIRPath.evaluate(patient, "resource.contact.name.family") as string[]
-        )[0] || ""
-      }`.trim()
-    : "No emergency contact";
-
-  const emergencyContactPhone = emergencyContact
-    ? (
-        FHIRPath.evaluate(patient, "resource.contact.telecom.value") as string[]
+  const emergencyContactPhone = (FHIRPath.evaluate(patient, "resource.contact.telecom.value") as string[]
       )[0] || "None specified"
-    : "None specified";
+   
 
   const gender =
     (FHIRPath.evaluate(patient, "resource.gender") as string[])[0] ||
@@ -126,7 +136,6 @@ const processPatientData = (patient: Patient): Patient => {
     lastName,
     prefix,
     birthDate,
-    emergencyContact,
     gender,
     emergencyContactName,
     emergencyContactPhone,
@@ -143,8 +152,8 @@ const processPatientData = (patient: Patient): Patient => {
 export async function getPatient(id: string): Promise<Patient | void> {
   try {
     const res = await axios.get(`${backendUrl}/Patient/${id}`);
-    const patientData = res.data;
-    const entry = { resource: patientData };
+    const patientData  = res.data;
+    const entry: FHIRResource = { resource: patientData };
     const patient: Patient = processPatientData(entry);
     console.log(patient);
     return patient;

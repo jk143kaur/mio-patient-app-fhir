@@ -11,7 +11,7 @@ import {
   FaClock,
 } from "react-icons/fa";
 
-interface Patient {
+export interface Patient {
   patientId: string;
   prefix: string;
   firstName: string;

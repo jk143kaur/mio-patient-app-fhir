@@ -1,0 +1,61 @@
+services:
+
+  
+# Fuego container runs the firemetrics FHIR server
+  frontend:
+    build:
+      context: .
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:3001  
+    depends_on:
+      - fuego
+    networks:
+      - default
+
+  fuego:
+    image: repo.firemetricshealth.com/ghcr/firemetrics/fuego:latest
+    environment:
+      FUEGO_SERVER_INTERFACE: 0.0.0.0
+      FUEGO_SERVER_PORT: 3001
+      FUEGO_SERVER_PUBLIC_URL: ${FUEGO_SERVER_PUBLIC_URL:-http://localhost:3001}
+      FUEGO_DATABASE_HOST: db
+      FUEGO_DATABASE_PORT: ${FUEGO_DATABASE_PORT:-5432}
+      FUEGO_DATABASE_USERNAME: postgres
+      FUEGO_DATABASE_DBNAME: firemetrics
+      FUEGO_DATABASE_PASSWORD: ${FUEGO_DATABASE_PASSWORD:-firemetrics}
+    depends_on:
+      - db
+    networks:
+      - default
+    ports:
+      - "3001:3001"
+    healthcheck:
+      test: ["CMD", "/app/fuego_healthcheck"]
+      interval: 10s
+      timeout: 30s
+      retries: 30
+    restart: unless-stopped
+
+  db:
+    image: repo.firemetricshealth.com/ghcr/firemetrics/fmx-testing:latest-amd64
+    volumes:
+      - /tmp/fmx-testing/volumes/pgdata:/home/postgres/pgdata
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -h localhost"]
+      interval: 10s
+      timeout: 30s
+      retries: 30
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: firemetrics
+      POSTGRES_DB: firemetrics
+      DATASET: mio_patientenkurzakte
+
+# Network configuration
+networks:
+  default:

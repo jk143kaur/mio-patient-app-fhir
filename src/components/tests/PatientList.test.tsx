@@ -21,7 +21,6 @@ const mockPatients: Patient[] = [
     phone: "",
     gender: "Male",
     birthDate: "1990-01-01",
-    emergencyContact: "",
     emergencyContactPhone: "",
     emergencyContactName: "",
     identifierCode: "",
