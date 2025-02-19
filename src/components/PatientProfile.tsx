@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { getPatient } from "../apis";
 import { useParams } from "react-router-dom";
 import Navbar from "./Navbar";
+import {Patient } from "../types"
 import {
   FaUser,
   FaBirthdayCake,
@@ -11,23 +12,6 @@ import {
   FaClock,
 } from "react-icons/fa";
 
-export interface Patient {
-  patientId: string;
-  prefix: string;
-  firstName: string;
-  lastName: string;
-  birthDate: string;
-  gender: string;
-  phone: string;
-  emergencyContactName: string;
-  emergencyContactPhone: string;
-  identifierCode: string;
-  identifierType: string;
-  identifierTypeValue: string;
-  metaLastUpdated: string;
-  metaProfile: string;
-  metaVersionId: string;
-}
 
 function PatientProfile() {
   const [patient, setPatient] = useState<Patient | null>(null);
@@ -56,9 +40,7 @@ function PatientProfile() {
   }, [id]);
 
   console.log(error);
-  if (!patient && !error) {
-    return <div>Loading...</div>;
-  }
+ 
 
   const sections = [
     "All",

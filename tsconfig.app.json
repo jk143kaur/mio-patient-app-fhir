@@ -6,7 +6,7 @@
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
-    "types": ["@testing-library/jest-dom","vitest","vitest/globals"],
+    "types": ["@testing-library/jest-dom/vitest","vitest","vitest/globals"],
 
     /* Bundler mode */
     "moduleResolution": "bundler",

@@ -1,15 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { getPatients } from "../apis";
 import { useNavigate } from "react-router-dom";
-
-
-interface Patient {
-  patientId: string;
-  firstName: string;
-  lastName: string;
-  gender: string;
-  birthDate: string;
-}
+import {Patient} from "../types"
 
 const PatientsList: React.FC = () => {
   const navigate = useNavigate();

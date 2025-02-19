@@ -2,7 +2,7 @@ import { describe, it, expect, vi, Mock } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import PatientList from "../PatientList";
 import { getPatients } from "../../apis";
-import { Patient } from "../../apis";
+import { Patient } from "../../types";
 import { MemoryRouter } from "react-router-dom";
 import "@testing-library/jest-dom/vitest";
 

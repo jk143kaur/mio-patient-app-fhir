@@ -1,163 +1,64 @@
 import axios from "axios";
 import FHIRPath from "fhirpath";
+import { FHIRResource, Patient } from "./types";
 
-const backendUrl = "http://localhost:3001/fhir/";
 
-interface FHIRResource {
-  resource: {
-    id: string;
-    name: {
-      prefix: string;
-      given: string[];
-      family: string;
-    };
-    birthDate: string;
-    gender: string;
-    contact: Array<{
-      name: {
-        given: string[];
-        family: string;
-      };
-      telecom: { value: string }[];
-    }>;
-    identifier: Array<{
-      type: {
-        coding: { code: string; display: string }[];
-      };
-      value: string;
-    }>;
-    telecom: Array<{ value: string }>;
-    meta: {
-      lastUpdated: string;
-      profile: string[];
-      versionId: string;
-    };
-  };
-}
+const backendUrl = import.meta.env.VITE_BACKEND_URL 
 
- export interface Patient {
-  patientId: string;
-  firstName: string;
-  lastName: string;
-  prefix: string;
-  birthDate: string;
-  gender: string;
-  emergencyContactName: string;
-  emergencyContactPhone: string;
-  identifierCode: string;
-  identifierType: string;
-  identifierTypeValue: string;
-  phone: string;
-  metaProfile: string;
-  metaVersionId: string;
-  metaLastUpdated: string;
-}
-
-export async function getPatients(): Promise<Patient[] | void> {
+export async function getPatients(): Promise<Patient[]> {
   try {
     const res = await axios.get(`${backendUrl}/Patient`);
     const data = res.data;
+
     if (!data.entry) {
       throw new Error("No patient data found in response");
     }
 
-    const patients: Patient[] = data.entry.map((patient: FHIRResource) =>
-      processPatientData(patient)
-    );
-    console.log(patients);
-    return patients;
+    return data.entry.map((entry: FHIRResource) => processPatientData(entry));
   } catch (error) {
     console.error("Error fetching patient data", error);
+    throw error;
   }
 }
 
 const processPatientData = (patient: FHIRResource): Patient => {
-  const patientId =
-    (FHIRPath.evaluate(patient, "resource.id") as string[])[0] ||
-    "No Id available";
-  const prefix =
-    (FHIRPath.evaluate(patient, "resource.name.prefix") as string[])[0] ||
-    "No prefix available";
-  const firstName =
-    (FHIRPath.evaluate(patient, "resource.name.given") as string[])[0] ||
-    "No name provided";
-  const lastName =
-    (FHIRPath.evaluate(patient, "resource.name.family") as string[])[0] ||
-    "No name provided";
-  const birthDate =
-    (FHIRPath.evaluate(patient, "resource.birthDate") as string[])[0] ||
-    "No birthdate provided";
 
-const emergencyContactName =
-  (
-    FHIRPath.evaluate(patient, "resource.contact.name.given") as string[]
-  )[0] || "None specified";
-
-  const emergencyContactPhone = (FHIRPath.evaluate(patient, "resource.contact.telecom.value") as string[]
-      )[0] || "None specified"
-   
-
-  const gender =
-    (FHIRPath.evaluate(patient, "resource.gender") as string[])[0] ||
-    "No gender specified";
-  const identifierCode =
-    (
-      FHIRPath.evaluate(
-        patient,
-        "resource.identifier.type.coding.code"
-      ) as string[]
-    )[0] || "No identifier specified";
-  const phone =
-    (FHIRPath.evaluate(patient, "resource.telecom.value") as string[])[0] ||
-    "No phone provided";
-  const identifierType =
-    (
-      FHIRPath.evaluate(
-        patient,
-        "resource.identifier.type.coding.display"
-      ) as string[]
-    )[0] || "None specified";
-  const identifierTypeValue =
-    (FHIRPath.evaluate(patient, "resource.identifier.value") as string[])[0] ||
-    "None specified";
-  const metaLastUpdated =
-    (FHIRPath.evaluate(patient, "resource.meta.lastUpdated") as string[])[0] ||
-    "None specified";
-  const metaProfile =
-    (FHIRPath.evaluate(patient, "resource.meta.profile") as string[])[0] ||
-    "None specified";
-  const metaVersionId =
-    (FHIRPath.evaluate(patient, "resource.meta.versionId") as string[])[0] ||
-    "None specified";
+  const extractFHIRValue = (path: string): string => {
+    const result = FHIRPath.evaluate(patient, path);
+    return Array.isArray(result) && result.length > 0 ? String(result[0]) : "";
+  };
 
   return {
-    patientId,
-    firstName,
-    lastName,
-    prefix,
-    birthDate,
-    gender,
-    emergencyContactName,
-    emergencyContactPhone,
-    identifierCode,
-    identifierType,
-    identifierTypeValue,
-    phone,
-    metaProfile,
-    metaVersionId,
-    metaLastUpdated,
+    patientId: extractFHIRValue("resource.id"),
+    prefix: extractFHIRValue("resource.name[0].prefix"),
+    firstName: extractFHIRValue("resource.name[0].given[0]"),
+    lastName: extractFHIRValue("resource.name[0].family"),
+    birthDate: extractFHIRValue("resource.birthDate"),
+    gender: extractFHIRValue("resource.gender"),
+    emergencyContactName: extractFHIRValue("resource.contact[0].name.given[0]"),
+    emergencyContactPhone: extractFHIRValue(
+      "resource.contact[0].telecom[0].value"
+    ),
+    identifierCode: extractFHIRValue(
+      "resource.identifier[0].type.coding[0].code"
+    ),
+    identifierType: extractFHIRValue(
+      "resource.identifier[0].type.coding[0].display"
+    ),
+    identifierTypeValue: extractFHIRValue("resource.identifier[0].value"),
+    phone: extractFHIRValue("resource.telecom[0].value"),
+    metaProfile: extractFHIRValue("resource.meta.profile[0]"),
+    metaVersionId: extractFHIRValue("resource.meta.versionId"),
+    metaLastUpdated: extractFHIRValue("resource.meta.lastUpdated"),
   };
 };
 
-export async function getPatient(id: string): Promise<Patient | void> {
+export async function getPatient(id: string): Promise<Patient> {
   try {
     const res = await axios.get(`${backendUrl}/Patient/${id}`);
-    const patientData  = res.data;
-    const entry: FHIRResource = { resource: patientData };
-    const patient: Patient = processPatientData(entry);
-    console.log(patient);
-    return patient;
+    return processPatientData({ resource: res.data });
   } catch (error) {
     console.error("Error fetching patient details", error);
+    throw error;
   }
 }

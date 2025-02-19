@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import PatientProfile from "../PatientProfile";
-import { getPatient, Patient } from "../../apis"; 
+import { getPatient } from "../../apis"; 
+import { Patient } from "../../types"
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import "@testing-library/jest-dom/vitest";
 
@@ -53,7 +54,7 @@ describe("PatientProfile Component", () => {
   });
 
   it("fetches and displays patient details", async () => {
-    // Use Vitest's mockResolvedValueOnce to mock a successful response
+   
     vi.mocked(getPatient).mockResolvedValueOnce(mockPatient);
     renderComponent();
 
@@ -65,7 +66,7 @@ describe("PatientProfile Component", () => {
   });
 
   it("handles API error gracefully", async () => {
-    // Use Vitest's mockRejectedValueOnce to mock an error response
+   
     vi.mocked(getPatient).mockRejectedValueOnce(new Error("API Error"));
     renderComponent();
 
